@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to ASCII Art</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global styles */
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        /* Optional: Hide header (if you want to hide the header entirely) */
+        header {
+            display: none;
+        }
+
+        /* Main frame container */
+        .frame {
+            width: 90%;
+            height: 90%;
+            background: #111;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            border: 2px solid #00ff00;
+        }
+
+        /* Frame where ASCII Art is displayed */
+        .ascii-frame {
+            width: 100%;
+            height: 85%;
+            background: #111;
+            padding: 5px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Styling for the ASCII text */
+        pre {
+            font-size: 7px;
+            line-height: 7px;
+            color: #00ff00;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        /* Upload button styles */
+        .upload-container {
+            margin-top: 10px;
+        }
+
+        input {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        input:hover {
+            background: #33ff33;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* Make the design responsive */
+        @media screen and (max-width: 768px) {
+            .frame {
+                width: 95%;
+                height: 95%;
+            }
+
+            pre {
+                font-size: 5px; /* Reduce font size on smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Optional Header (if visible, add content here) -->
+    <header>
+        <h1>My ASCII Art Converter</h1>
+    </header>
+
+    <!-- Main Frame Section -->
+    <div class="frame">
+        <div class="ascii-frame">
+            <pre id="ascii">Upload an image to convert it to ASCII Art...</pre>
+        </div>
+        <div class="upload-container">
+            <input type="file" id="upload" accept="image/*">
+        </div>
+    </div>
+
+    <!-- Hidden canvas used for image processing -->
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const upload = document.getElementById("upload");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const ascii = document.getElementById("ascii");
+
+        upload.addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const scaleFactor = Math.min(150 / img.width, 75 / img.height);
+                        const width = Math.floor(img.width * scaleFactor);
+                        const height = Math.floor(img.height * scaleFactor);
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        convertToASCII(width, height);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function convertToASCII(width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const pixels = imageData.data;
+            let asciiArt = "";
+
+            const chars = [" ", ".", "o", "O", "@"];
+
+            for (let y = 0; y < height; y++) {
+                let row = "";
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4;
+                    const r = pixels[index];
+                    const g = pixels[index + 1];
+                    const b = pixels[index + 2];
+                    const brightness = (r + g + b) / 3;
+
+                    let charIndex = Math.floor((brightness / 255) * (chars.length - 1));
+                    row += chars[charIndex];  
+                }
+                asciiArt += row + "\n";
+            }
+            ascii.textContent = asciiArt;
+        }
+    </script>
+</body>
+</html>
